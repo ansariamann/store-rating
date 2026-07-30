@@ -1,0 +1,39 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// SQLite doesn't support enums natively, so we use string for role
+model User {
+  id              String   @id @default(uuid())
+  name            String
+  email           String   @unique
+  password        String
+  address         String?
+  role            String   @default("NORMAL_USER") // "SYSTEM_ADMIN" | "NORMAL_USER" | "STORE_OWNER"
+  
+  ratingsGiven    Rating[] @relation("UserRatings")
+  ratingsReceived Rating[] @relation("StoreRatings")
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Rating {
+  id        String   @id @default(uuid())
+  score     Int
+  userId    String
+  storeId   String
+  
+  user      User     @relation("UserRatings", fields: [userId], references: [id])
+  store     User     @relation("StoreRatings", fields: [storeId], references: [id])
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, storeId])
+}
